@@ -192,269 +192,287 @@ calculated_vertex_y = math.sin(math.pi / 180 * args.angle_of_response) * (
 
 def make_block_mesh_dict(airfoil_x, airfoil_y):
     # airfoil의 가운데 점 찾기
-    airfoil_x_upper = airfoil_x[: len(airfoil_x) + 1 // 2]
-    airfoil_y_upper = airfoil_y[: len(airfoil_y) + 1 // 2]
-    airfoil_x_lower = airfoil_x[len(airfoil_x) + 1 // 2 :]
-    airfoil_y_lower = airfoil_y[len(airfoil_y) + 1 // 2 :]
+    airfoil_x_upper = airfoil_x[1 : (airfoil_x.size + 1) // 2 - 1]
+    airfoil_y_upper = airfoil_y[1 : (airfoil_x.size + 1) // 2 - 1]
+    airfoil_x_lower = airfoil_x[(airfoil_x.size + 1) // 2 : -1]
+    airfoil_y_lower = airfoil_y[(airfoil_y.size + 1) // 2 : -1]
 
-    upper_coordinate_string = "\n".join(
+    upper_coordinate_string_0 = "\n".join(
         f"(\t{xi:.6f}\t{yi:.6f}\t0\t)"
         for xi, yi in zip(airfoil_x_upper, airfoil_y_upper)
     )
-    lower_coordinate_string = "\n".join(
+    upper_coordinate_string_1 = "\n".join(
+        f"(\t{xi:.6f}\t{yi:.6f}\t0.3\t)"
+        for xi, yi in zip(airfoil_x_upper, airfoil_y_upper)
+    )
+    lower_coordinate_string_0 = "\n".join(
         f"(\t{xi:.6f}\t{yi:.6f}\t0\t)"
         for xi, yi in zip(airfoil_x_lower, airfoil_y_lower)
     )
+    lower_coordinate_string_1 = "\n".join(
+        f"(\t{xi:.6f}\t{yi:.6f}\t0.3\t)"
+        for xi, yi in zip(airfoil_x_lower, airfoil_y_lower)
+    )
     # blockMeshDict 파일 내용 작성
-    block_mesh_content = f"""/*--------------------------------*- C++ -*----------------------------------*\\
-    | =========                 |                                                 |
-    | \\      /  F ield         | daehwa001210@gmail.com                          |
-    |  \\    /   O peration     | Made By Daehwa Ko                               |
-    |   \\  /    A nd           |                                                 |
-    |    \\/     M anipulation  |                                                 |
-    \\*---------------------------------------------------------------------------*/
-    FoamFile
-    {{
-        version     2.0;
-        format      ascii;
-        class       dictionary;
-        object      blockMeshDict;
-    }}
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    block_mesh_content = f"""
+/*--------------------------------*- C++ -*----------------------------------*\\
+| =========                 |                                                 |
+| \\      /  F ield         | daehwa001210@gmail.com                          |
+|  \\    /   O peration     | Made By Daehwa Ko                               |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    convertToMeters {args.mesh_scale};
-    gemetry
-    {{
-    }}
-    vertices
+convertToMeters {args.mesh_scale};
+gemetry
+{{
+}}
+vertices
+(
+    (0 0 0) // 0
+    ({inlet_x} 0 0) // 1
+    ({inlet_x} {args.distance_to_inlet} 0) // 2
+    ({inlet_negative_x} 0 0) // 3
+    (0 0 {args.depth_z_in_direction}) // 4
+    ({inlet_x} 0 {args.depth_z_in_direction}) // 5
+    ({inlet_x} {args.distance_to_inlet} {args.depth_z_in_direction}) // 6
+    ({inlet_negative_x} 0 {args.depth_z_in_direction}) // 7
+    ({outlet_x} {calculated_vertex_y:.10f} 0) // 8
+    ({outlet_x} {args.distance_to_inlet} 0) // 9
+    ({outlet_x} {calculated_vertex_y:.10f} {args.depth_z_in_direction}) // 10
+    ({outlet_x} {args.distance_to_inlet} {args.depth_z_in_direction}) // 11
+    ({inlet_x} {-args.distance_to_inlet} 0) // {args.distance_to_inlet}
+    ({inlet_x} {-args.distance_to_inlet} {args.depth_z_in_direction}) // 13
+    ({outlet_x} {-args.distance_to_inlet} 0) // 14
+    ({outlet_x} {-args.distance_to_inlet} {args.depth_z_in_direction}) // 15
+    ({inlet_x} 0 0) // 16
+    ({inlet_x} 0 {args.depth_z_in_direction}) // 17
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ({o_21 + o_23} {n_10 + n_13} 1)  // block 1
+    edgeGrading
     (
-        (0 0 0) // 0
-        ({inlet_x} 0 0) // 1
-        ({inlet_x} {args.distance_to_inlet} 0) // 2
-        ({inlet_negative_x} 0 0) // 3
-        (0 0 {args.depth_z_in_direction}) // 4
-        ({inlet_x} 0 {args.depth_z_in_direction}) // 5
-        ({inlet_x} {args.distance_to_inlet} {args.depth_z_in_direction}) // 6
-        ({inlet_negative_x} 0 {args.depth_z_in_direction}) // 7
-        ({outlet_x} {calculated_vertex_y:.8f} 0) // 8
-        ({outlet_x} {args.distance_to_inlet} 0) // 9
-        ({outlet_x} {calculated_vertex_y:.8f} {args.depth_z_in_direction}) // 10
-        ({outlet_x} {args.distance_to_inlet} {args.depth_z_in_direction}) // 11
-        ({inlet_x} {-args.distance_to_inlet} 0) // {args.distance_to_inlet}
-        ({inlet_x} {-args.distance_to_inlet} {args.depth_z_in_direction}) // 13
-        ({outlet_x} {-args.distance_to_inlet} 0) // 14
-        ({outlet_x} {-args.distance_to_inlet} {args.depth_z_in_direction}) // 15
-        ({inlet_x} 0 0) // 16
-        ({inlet_x} 0 {args.depth_z_in_direction}) // 17
-    );
-
-    blocks
+    // x-direction expansion ratio
     (
-        hex (0 1 2 3 4 5 6 7) ({o_21 + o_23} {n_10 + n_13} 1)  // block 1
-        edgeGrading
-        (
-        // x-direction expansion ratio
-        (
-            ({o_20} {o_21/(o_21 + o_23)} {o_22})
-            ({1 - o_20} {1-(o_21/(o_21 + o_23))} {1/o_24})
-        )
-        {o_28} {o_28}
-        (
-            ({o_20} {o_21/(o_21 + o_23)} {o_22})
-            ({1 - o_20} {1-(o_21/(o_21 + o_23))} {1/o_24})
-        )
-        // y-direction expansion ratio
-        (
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {o_13})
-        )
-        (
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {o_13})
-        )
-        (
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {o_13})
-        )
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {o_13})
-        )
-
-        // z-direction expansion ratio
-        1 1 1 1
-        )
-        
-        hex (1 8 9 2 5 10 11 6) ({n_16} {n_10 + n_13} 1)    // block 2
-        edgeGrading
-        (
-        // x-direction expansion ratio
-        {o_16} {o_16} {o_16} {o_16}
-        // y-direction expansion ratio
-        (
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {o_13})
-        )
-        {expansion_ratio_at_outlet} {expansion_ratio_at_outlet}
-        (
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {o_13})
-        )
-
-        // z-direction expansion ratio
-        1 1 1 1
-        ) 
-
-        hex (3 12 16 0 7 13 17 4) ({o_21 + o_23} {n_10 + n_13} 1)    // block 3
-        edgeGrading
-        (
-        // x-direction expansion ratio
-        {o_28}
-        (
-            ({o_20} {o_21/(o_21 + o_23)} {o_22})
-            ({1 - o_20} {1-(o_21/(o_21 + o_23))} {1/o_24})
-        )
-        (
-            ({o_20} {o_21/(o_21 + o_23)} {o_22})
-            ({1 - o_20} {1-(o_21/(o_21 + o_23))} {1/o_24})
-        )
-        {o_28}
-        // y-direction expansion ratio
-        (
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {1/o_13})
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {1/o_10})
-        )
-        (
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {1/o_13})
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {1/o_10})
-        )
-        (
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {1/o_13})
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {1/o_10})
-        )
-        (
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {1/o_13})
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {1/o_10})
-        )
-
-        // z-direction expansion ratio
-        1 1 1 1
-        )
-
-        hex (12 14 8 16 13 15 10 17) ({n_16} {n_10 + n_13} 1)    // block 4
-        edgeGrading
-        (
-        // x-direction expansion ratio
-        {o_16} {o_16} {o_16} {o_16}
-        // y-direction expansion ratio
-        (
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {1/o_13})
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-        )
-        {1/expansion_ratio_at_outlet} {1/expansion_ratio_at_outlet}
-        (
-            ({1 - args.boundary_layer_thickness/args.distance_to_inlet} {1-(n_10/(n_13 + n_10))} {1/o_13})
-            ({args.boundary_layer_thickness/args.distance_to_inlet} {n_10/(n_13 + n_10)} {o_10})
-        )
-        // z-direction expansion ratio
-        1 1 1 1
-        )
-
-
-    edges
+        ( {o_20:.9f} {o_21/(o_21 + o_23):.9f} {o_22:.9f} )
+        ( {1 - o_20:.9f} {1-( o_21/( o_21 + o_23)):.9f} {1/o_24:.9f} )
+     )
+    {o_28:.9f} {o_28:.9f}
+    ( 
+        ( {o_20:.9f} {o_21/( o_21 + o_23 ):.9f} {o_22:.9f} )
+        ( {1 - o_20:.9f} {1-( o_21/( o_21 + o_23 ) ):.9f} {1/o_24:.9f} )
+     )
+    // y-direction expansion ratio
+    ( 
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {o_10:.10f} )
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {o_13:.10f} )
+     )
+    ( 
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {o_10:.10f} )
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {o_13:.10f} )
+     )
+    ( 
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {o_10:.10f} )
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {o_13:.10f} )
+     )
     (
-        arc 3 2 ({-args.distance_to_inlet*math.sin(math.pi/4)+1} {args.distance_to_inlet*math.cos(math.pi/4)} 0)
-        arc 7 6 ({-args.distance_to_inlet*math.sin(math.pi/4)+1} {args.distance_to_inlet*math.cos(math.pi/4)} {args.depth_z_in_direction})
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {o_10:.10f} )
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {o_13:.10f} )
+     )
 
-        spline 1 0
-        {upper_coordinate_string}
-
-        spline 5 4
-        {upper_coordinate_string}
-
-        arc 3 12 ({-args.distance_to_inlet*math.sin(math.pi/4)+1} {-args.distance_to_inlet*math.cos(math.pi/4)} 0)
-        arc 7 13 ({-args.distance_to_inlet*math.sin(math.pi/4)+1} {-args.distance_to_inlet*math.cos(math.pi/4)} {args.depth_z_in_direction})
-
-        spline 0 16
-        {lower_coordinate_string}
-
-        spline 4 17
-        {lower_coordinate_string}
-    );
-
-    faces
+    // z-direction expansion ratio
+    1 1 1 1
+    )
+    
+    hex ( 1 8 9 2 5 10 11 6 ) ( {n_16} {n_10 + n_13} 1 )    // block 2
+    edgeGrading
     (
-
-    );
-
-    faces
+    // x-direction expansion ratio
+    {o_16:.9f} {o_16:.9f} {o_16:.9f} {o_16:.9f}
+    // y-direction expansion ratio
     (
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10):.10f} {o_10:.10f} )
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {o_13:.10f} )
+    )
+    {expansion_ratio_at_outlet:.10f} {expansion_ratio_at_outlet:.10f}
+    ( 
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {o_10:.10f} )
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {o_13:.10f} )
+    )
 
-    );
+    // z-direction expansion ratio
+    1 1 1 1
+    ) 
 
-    defaultPatch
-    {{
-        name frontAndBack;
-        type empty;
-    }}
-
-    boundary
+    hex ( 3 12 16 0 7 13 17 4 ) ( {o_21 + o_23} {n_10 + n_13} 1 )    // block 3
+    edgeGrading
+    ( 
+    // x-direction expansion ratio
+    {o_28:.9f}
+    ( 
+        ( {o_20:.10f} {o_21/(o_21 + o_23 ):.10f} {o_22:.10f} )
+        ( {1 - o_20:.10f} {1-(o_21/(o_21 + o_23 ) ):.10f} {1/o_24:.10f} )
+    )
     (
-    inlet              // patch name
-            {{
-                type patch; 
-                faces
-                (
-                    (9 2 6 11)  
-                    (2 3 7 6  )  
-                    (3 12 13 7  )
-                    (12 15 14 13  )
-                );
-            }}
-
-    outlet              // patch name
-            {{
-                type patch;    
-                faces
-                (
-                    (8 9 10 11)  
-                    (15 8 10 14  ) 
-                );
-            }}
-
-    walls              // patch name
-            {{
-                type wall; 
-                faces
-                (
-                    (0 1 5 4)  
-                    (0 4 17 16  ) 
-                );
-            }}
-
-    interface1              // patch name
-            {{
-                type patch;   
-                faces
-                (
-                    (1 8 10 5)  
-                );
-            }}
-    interface2              // patch name
-            {{
-                type patch;    
-                faces
-                (
-                    (16 17 10 8)  
-                );
-            }}
-    );
-
-    mergePatchPairs
+        ( {o_20:.10f} {o_21/(o_21 + o_23 ):.10f} {o_22:.10f} )
+        ( {1 - o_20:.10f} {1-(o_21/(o_21 + o_23 ) ):.10f} {1/o_24:.10f} )
+    )
+    {o_28:.9f}
+    // y-direction expansion ratio
     (
-        ( interface1 interface2 )
-    );
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10)):.10f} {1/o_13:.10f} )
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {1/o_10:.10f} )
+    )
+    ( 
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {1/o_13:.10f} )
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {1/o_10:.10f} )
+    )
+    ( 
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {1/o_13:.10f} )
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {1/o_10:.10f} )
+    )
+    ( 
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {1/o_13:.10f} )
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {1/o_10:.10f} )
+    )
 
-    """
+    // z-direction expansion ratio
+    1 1 1 1
+    )
+
+    hex ( 12 14 8 16 13 15 10 17 ) ( {n_16} {n_10 + n_13} 1 )    // block 4
+    edgeGrading
+    (
+    // x-direction expansion ratio
+    {o_16:.9f} {o_16:.9f} {o_16:.9f} {o_16:.9f}
+    // y-direction expansion ratio
+    (
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10)):.10f} {1/o_13:.10f} )
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {1/o_10:.10f} )
+     )
+    {1/expansion_ratio_at_outlet:.10f} {1/expansion_ratio_at_outlet:.10f}
+    ( 
+        ( {1 - args.boundary_layer_thickness/args.distance_to_inlet:.10f} {1-( n_10/( n_13 + n_10 ) ):.10f} {1/o_13:.10f} )
+        ( {args.boundary_layer_thickness/args.distance_to_inlet:.10f} {n_10/( n_13 + n_10 ):.10f} {1/o_10:.10f} )
+    )
+    // z-direction expansion ratio
+    1 1 1 1
+    )
+);
+
+edges
+(
+    arc 3 2 ( {-args.distance_to_inlet*math.sin( math.pi/4)+1:.9f} {args.distance_to_inlet*math.cos( math.pi/4):.9f} 0 )
+    arc 7 6 ( {-args.distance_to_inlet*math.sin( math.pi/4 )+1:.9f} {args.distance_to_inlet*math.cos( math.pi/4 ):.9f} {args.depth_z_in_direction} )
+
+    spline 1 0
+    (
+    {upper_coordinate_string_0}
+    )
+
+    spline 5 4
+    (
+    {upper_coordinate_string_1}
+    )
+    
+    arc 3 12 ( {-args.distance_to_inlet*math.sin( math.pi/4 )+1:.9f} {-args.distance_to_inlet*math.cos( math.pi/4 ):.9f} 0 )
+    arc 7 13 ( {-args.distance_to_inlet*math.sin( math.pi/4 )+1:.9f} {-args.distance_to_inlet*math.cos( math.pi/4 ):.9f} {args.depth_z_in_direction} )
+
+    spline 0 16
+    (
+    {lower_coordinate_string_0}
+    )
+    
+    spline 4 17
+    (
+    {lower_coordinate_string_1}
+    )
+);
+
+faces
+( 
+
+);
+
+faces
+( 
+
+);
+
+defaultPatch
+{{
+    name frontAndBack;
+    type empty;
+}}
+
+boundary
+( 
+inlet              // patch name
+        {{
+            type patch; 
+            faces
+            ( 
+                ( 9 2 6 11 )  
+                ( 2 3 7 6 )  
+                ( 3 12 13 7 )
+                ( 12 15 14 13 )
+            );
+        }}
+
+outlet              // patch name
+        {{
+            type patch;    
+            faces
+            ( 
+                ( 8 9 10 11 )  
+                ( 15 8 10 14 ) 
+            );
+        }}
+
+walls              // patch name
+        {{
+            type wall; 
+            faces
+            ( 
+                ( 0 1 5 4 )  
+                ( 0 4 17 16 ) 
+            );
+        }}
+
+interface1              // patch name
+        {{
+            type patch;   
+            faces
+            ( 
+                ( 1 8 10 5 )  
+            );
+        }}
+interface2              // patch name
+        {{
+            type patch;    
+            faces
+            ( 
+                ( 16 17 10 8 )  
+            );
+        }}
+);
+
+mergePatchPairs
+( 
+    ( interface1 interface2 )
+);
+// ************************************************************************* //					
+"""
 
     # blockMeshDict 파일 생성
     with open("blockMeshDict", "w") as f:
