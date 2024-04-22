@@ -1,8 +1,8 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
-| \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \    /   O peration     | Version:  5                                     |
-|   \  /    A nd           | Web:      www.OpenFOAM.org                      |
+| \      /  F ield         | daehwa001210@gmail.com                          |
+|  \    /   O peration     | Made By Daehwa Ko                               |
+|   \  /    A nd           |                                                 |
 |    \/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -98,6 +98,7 @@ blocks
 
     hex (3 12 16 0 7 13 17 4) (41 48 1)    // block 3
     edgeGrading
+    (
     // x-direction expansion ratio
     0.03
     (
@@ -136,7 +137,6 @@ blocks
     (
     // x-direction expansion ratio
     33.333333333333336 33.333333333333336 33.333333333333336 33.333333333333336
-    )
     // y-direction expansion ratio
     (
         (0.9583333333333334 0.6458333333333333 0.11093055533702177)
@@ -150,7 +150,6 @@ blocks
     // z-direction expansion ratio
     1 1 1 1
     )
-);
 
 
 edges
@@ -254,7 +253,7 @@ interface2              // patch name
         }
 );
 
- mergePatchPairs
+mergePatchPairs
 (
     ( interface1 interface2 )
 );
